@@ -1,11 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Environment } from "../../../types/environment";
+import type { Environment, EnvironmentVariableMetadata } from "../../../types/environment";
 
 export async function createEnvironment(
     name: string,
-    variables: Record<string, string>
+    variables: Record<string, string>,
+    variableMetadata?: Record<string, EnvironmentVariableMetadata>,
 ): Promise<Environment> {
-    return invoke<Environment>("create_environment", { name, variables });
+    return invoke<Environment>("create_environment", { name, variables, variableMetadata });
 }
 
 export async function listEnvironments(): Promise<Environment[]> {
@@ -15,9 +16,10 @@ export async function listEnvironments(): Promise<Environment[]> {
 export async function updateEnvironment(
     id: string,
     name: string,
-    variables: Record<string, string>
+    variables: Record<string, string>,
+    variableMetadata?: Record<string, EnvironmentVariableMetadata>,
 ): Promise<Environment> {
-    return invoke<Environment>("update_environment", { id, name, variables });
+    return invoke<Environment>("update_environment", { id, name, variables, variableMetadata });
 }
 
 export async function deleteEnvironment(id: string): Promise<void> {

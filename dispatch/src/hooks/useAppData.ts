@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HistoryItem } from "../types/history";
 import type { Collection, OrderItem } from "../types/collection";
-import type { Environment } from "../types/environment";
+import type { Environment, EnvironmentVariableMetadata } from "../types/environment";
 import {
   loadHistory,
   clearHistory,
@@ -49,7 +49,11 @@ export function useAppData() {
   );
   const environmentSaveVersions = useRef(new Map<string, number>());
   const pendingEnvironmentDrafts = useRef(
-    new Map<string, { name: string; variables: Record<string, string> }>()
+    new Map<string, {
+      name: string;
+      variables: Record<string, string>;
+      variableMetadata?: Record<string, EnvironmentVariableMetadata>;
+    }>()
   );
 
   const flushPendingEnvironmentSaves = useCallback(async () => {
@@ -64,7 +68,12 @@ export function useAppData() {
     );
 
     for (const { id, draft, version } of drafts) {
-      const saved = await updateEnvironment(id, draft.name, draft.variables);
+      const saved = await updateEnvironment(
+        id,
+        draft.name,
+        draft.variables,
+        draft.variableMetadata,
+      );
       if (environmentSaveVersions.current.get(id) === version) {
         pendingEnvironmentDrafts.current.delete(id);
         setEnvironments((current) =>
@@ -295,13 +304,16 @@ export function useAppData() {
   const handleUpdateEnvironment = (
     id: string,
     name: string,
-    variables: Record<string, string>
+    variables: Record<string, string>,
+    variableMetadata?: Record<string, EnvironmentVariableMetadata>,
   ) => {
-    const nextEnvironment = { id, name, variables };
-    pendingEnvironmentDrafts.current.set(id, { name, variables });
+    const nextEnvironment = { id, name, variables, variableMetadata };
+    pendingEnvironmentDrafts.current.set(id, { name, variables, variableMetadata });
     setEnvironments((current) =>
       current.map((e) =>
-        e.id === id ? { ...e, name, variables } : e
+        e.id === id
+          ? { ...e, name, variables, variable_metadata: variableMetadata ?? e.variable_metadata }
+          : e
       )
     );
     setEnvironmentError(null);
@@ -318,7 +330,8 @@ export function useAppData() {
           const saved = await updateEnvironment(
             nextEnvironment.id,
             nextEnvironment.name,
-            nextEnvironment.variables
+            nextEnvironment.variables,
+            nextEnvironment.variableMetadata,
           );
           if (environmentSaveVersions.current.get(id) === saveVersion) {
             pendingEnvironmentDrafts.current.delete(id);
@@ -347,7 +360,8 @@ export function useAppData() {
   const handleCommitEnvironment = async (
     id: string,
     name: string,
-    variables: Record<string, string>
+    variables: Record<string, string>,
+    variableMetadata?: Record<string, EnvironmentVariableMetadata>,
   ) => {
     const pendingTimer = environmentSaveTimers.current.get(id);
     if (pendingTimer) clearTimeout(pendingTimer);
@@ -356,7 +370,7 @@ export function useAppData() {
     environmentSaveVersions.current.set(id, saveVersion);
 
     try {
-      const saved = await updateEnvironment(id, name, variables);
+      const saved = await updateEnvironment(id, name, variables, variableMetadata);
       pendingEnvironmentDrafts.current.delete(id);
       setEnvironments((current) =>
         current.map((environment) =>

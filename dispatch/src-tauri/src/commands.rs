@@ -5,5 +5,6 @@ pub mod environment_command;
 pub mod history_command;
 pub mod oauth_command;
 pub mod openapi_command;
+pub mod postman_command;
 pub mod request_command;
 pub mod workspace_command;

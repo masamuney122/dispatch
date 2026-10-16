@@ -148,6 +148,7 @@ pub fn import_openapi(
                     order: variant.order.unwrap_or(sibling_order),
                     created_at: context.timestamp.clone(),
                     updated_at: context.timestamp.clone(),
+                    description: String::new(),
                 });
             }
         }
@@ -164,6 +165,10 @@ pub fn import_openapi(
             requests,
             created_at: context.timestamp.clone(),
             updated_at: context.timestamp.clone(),
+            description: String::new(),
+            variables: HashMap::new(),
+            auth: None,
+            scripts: Default::default(),
         },
         environment_variables: state.environment_variables,
         warnings: state.warnings,
@@ -372,6 +377,9 @@ fn ensure_folder(
         order: folders.len() as i64,
         created_at: context.timestamp.clone(),
         updated_at: context.timestamp.clone(),
+        description: String::new(),
+        auth: None,
+        scripts: Default::default(),
     });
     id
 }

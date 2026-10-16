@@ -76,6 +76,26 @@ describe("web environment adapter", () => {
     expect(storeActiveEnvironment).toHaveBeenCalledWith("workspace-1", "");
   });
 
+  it("passes variable metadata to the shared core mutation", async () => {
+    const environment = { id: "environment-1", name: "Local", variables: { token: "secret" } };
+    applyEnvironmentMutationCore.mockResolvedValue({
+      environments: [environment],
+      active_environment_id: null,
+      environment,
+    });
+    const metadata = {
+      token: { enabled: false, sensitive: true, description: "API token", order: 0 },
+    };
+    await updateEnvironment("environment-1", "Local", environment.variables, metadata);
+    expect(applyEnvironmentMutationCore.mock.calls[0][2]).toEqual({
+      action: "update",
+      id: "environment-1",
+      name: "Local",
+      variables: environment.variables,
+      variable_metadata: metadata,
+    });
+  });
+
   it("validates active selection through core without rewriting the document", async () => {
     applyEnvironmentMutationCore.mockResolvedValue({
       environments: [],

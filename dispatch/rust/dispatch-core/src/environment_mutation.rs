@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::Environment;
+use crate::{Environment, EnvironmentVariableMetadata};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EnvironmentMutationContext {
@@ -18,11 +18,15 @@ pub enum EnvironmentMutation {
     Create {
         name: String,
         variables: HashMap<String, String>,
+        #[serde(default)]
+        variable_metadata: Option<HashMap<String, EnvironmentVariableMetadata>>,
     },
     Update {
         id: String,
         name: String,
         variables: HashMap<String, String>,
+        #[serde(default)]
+        variable_metadata: Option<HashMap<String, EnvironmentVariableMetadata>>,
     },
     Delete {
         id: String,
@@ -49,15 +53,24 @@ pub fn apply_environment_mutation(
     let mut environments = environments.to_vec();
     let mut active = active_environment_id.map(str::to_string);
     let environment = match mutation {
-        EnvironmentMutation::Create { name, variables } => {
+        EnvironmentMutation::Create {
+            name,
+            variables,
+            variable_metadata,
+        } => {
             let id = required_entity_id(context)?;
             if environments.iter().any(|item| item.id == id) {
                 return Err(format!("Environment id already exists: {id}"));
             }
+            let variables = normalize_variables(variables)?;
             let environment = Environment {
                 id: id.to_string(),
                 name: environment_name(&name)?.to_string(),
-                variables: normalize_variables(variables)?,
+                variable_metadata: normalize_metadata(
+                    variable_metadata.unwrap_or_default(),
+                    &variables,
+                ),
+                variables,
                 workspace_id: Some(context.workspace_id.clone()),
                 created_at: context.timestamp.clone(),
                 updated_at: context.timestamp.clone(),
@@ -69,13 +82,19 @@ pub fn apply_environment_mutation(
             id,
             name,
             variables,
+            variable_metadata,
         } => {
             let environment = environments
                 .iter_mut()
                 .find(|item| item.id == id)
                 .ok_or_else(|| format!("Environment not found: {id}"))?;
             environment.name = environment_name(&name)?.to_string();
-            environment.variables = normalize_variables(variables)?;
+            let variables = normalize_variables(variables)?;
+            environment.variable_metadata = normalize_metadata(
+                variable_metadata.unwrap_or_else(|| environment.variable_metadata.clone()),
+                &variables,
+            );
+            environment.variables = variables;
             environment.workspace_id = Some(context.workspace_id.clone());
             environment.updated_at = context.timestamp.clone();
             Some(environment.clone())
@@ -115,6 +134,20 @@ pub fn merge_variable_scopes(scopes: &[HashMap<String, String>]) -> HashMap<Stri
         merged.extend(scope.clone());
     }
     merged
+}
+
+pub fn effective_environment_variables(environment: &Environment) -> HashMap<String, String> {
+    environment
+        .variables
+        .iter()
+        .filter(|(name, _)| {
+            environment
+                .variable_metadata
+                .get(*name)
+                .map_or(true, |metadata| metadata.enabled)
+        })
+        .map(|(name, value)| (name.clone(), value.clone()))
+        .collect()
 }
 
 fn validate_context(context: &EnvironmentMutationContext) -> Result<(), String> {
@@ -161,6 +194,21 @@ fn normalize_variables(
     Ok(normalized)
 }
 
+fn normalize_metadata(
+    metadata: HashMap<String, EnvironmentVariableMetadata>,
+    variables: &HashMap<String, String>,
+) -> HashMap<String, EnvironmentVariableMetadata> {
+    metadata
+        .into_iter()
+        .filter_map(|(raw_name, metadata)| {
+            let name = raw_name.trim();
+            variables
+                .contains_key(name)
+                .then(|| (name.to_string(), metadata))
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -181,6 +229,7 @@ mod tests {
             EnvironmentMutation::Create {
                 name: "  Local  ".into(),
                 variables: HashMap::from([(" baseUrl ".into(), "http://localhost".into())]),
+                variable_metadata: None,
             },
             &context("environment-1"),
         )
@@ -197,6 +246,7 @@ mod tests {
             id: "environment-1".into(),
             name: "Local".into(),
             variables: HashMap::new(),
+            variable_metadata: HashMap::new(),
             workspace_id: Some("workspace-1".into()),
             created_at: String::new(),
             updated_at: String::new(),
@@ -233,6 +283,7 @@ mod tests {
             EnvironmentMutation::Create {
                 name: "Local".into(),
                 variables: HashMap::from([(" ".into(), "value".into())]),
+                variable_metadata: None,
             },
             &context("environment-1"),
         )
@@ -251,5 +302,31 @@ mod tests {
         ]);
         assert_eq!(merged["host"], "default");
         assert_eq!(merged["token"], "active");
+    }
+
+    #[test]
+    fn disabled_environment_variables_are_not_effective() {
+        let environment = Environment {
+            id: "environment-1".into(),
+            name: "Local".into(),
+            variables: HashMap::from([
+                ("enabled".into(), "yes".into()),
+                ("disabled".into(), "no".into()),
+            ]),
+            variable_metadata: HashMap::from([(
+                "disabled".into(),
+                EnvironmentVariableMetadata {
+                    enabled: false,
+                    ..Default::default()
+                },
+            )]),
+            workspace_id: None,
+            created_at: String::new(),
+            updated_at: String::new(),
+        };
+        assert_eq!(
+            effective_environment_variables(&environment),
+            HashMap::from([("enabled".into(), "yes".into())])
+        );
     }
 }

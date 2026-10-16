@@ -18,6 +18,7 @@ pub(super) fn save(
         folder_id,
         created_at: context.timestamp.clone(),
         updated_at: context.timestamp.clone(),
+        description: String::new(),
     };
     collection.requests.push(saved.clone());
     collection.updated_at = context.timestamp.clone();

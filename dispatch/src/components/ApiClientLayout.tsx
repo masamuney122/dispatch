@@ -12,12 +12,15 @@ import { GlobalSettingsDialog } from "./settings/GlobalSettingsDialog";
 import { CookieManagerDialog } from "./cookies/CookieManagerDialog";
 import { CollectionRunnerPanel } from "./runner/CollectionRunnerPanel";
 import { CurlImportDialog } from "./import/CurlImportDialog";
+import { PostmanImportDialog } from "./import/PostmanImportDialog";
+import { PostmanEnvironmentExportDialog } from "./import/PostmanEnvironmentExportDialog";
 
 import { useRequestTabs } from "../hooks/useRequestTabs";
 import { useAppData } from "../hooks/useAppData";
 import { useRequestExecution } from "../hooks/useRequestExecution";
 import { useGlobalHttpSettings } from "../hooks/useGlobalHttpSettings";
 import { useOpenApiWorkflow } from "../hooks/useOpenApiWorkflow";
+import { usePostmanWorkflow } from "../hooks/usePostmanWorkflow";
 import { useCollectionRunner } from "../hooks/useCollectionRunner";
 import { useConsoleStore } from "../hooks/useConsoleStore";
 import {
@@ -36,6 +39,7 @@ import type { CurlImportResult } from "../utils/curlImport";
 import { exportWorkspaceArchive } from "../services/workspaceService";
 import { flushWorkspaceChanges } from "../services/workspaceLifecycle";
 import { platformCapabilities } from "../services/platformService";
+import { getEnabledEnvironmentVariables } from "../utils/environmentVariables";
 import {
   buildRequestUrl,
   createRequestPayload,
@@ -133,6 +137,15 @@ export const ApiClientLayout: React.FC<ApiClientLayoutProps> = ({
     refreshEnvironments,
     showCollections: () => setSidebarMode("collections"),
   });
+  const postman = usePostmanWorkflow({
+    refreshCollections,
+    refreshEnvironments,
+    showCollections: () => setSidebarMode("collections"),
+    openEnvironment: (environment) => {
+      openEnvironmentTab(environment.id);
+    },
+    activateEnvironment: handleSelectEnvironment,
+  });
 
   // ── Event Handlers ──
 
@@ -140,6 +153,7 @@ export const ApiClientLayout: React.FC<ApiClientLayoutProps> = ({
     activeTab,
     environments,
     activeEnvironmentId,
+    collections,
     updateActiveTab,
     commitEnvironment: handleCommitEnvironment,
     setHistory,
@@ -360,10 +374,12 @@ export const ApiClientLayout: React.FC<ApiClientLayoutProps> = ({
           collections={collections}
           onImportCurl={() => setCurlImportOpen(true)}
           onImportOpenApi={openApi.openImport}
+          onImportPostman={postman.openImport}
           onCreateCollection={handleCreateCollection}
           onRenameCollection={handleRenameCollection}
           onDeleteCollection={handleDeleteCollectionWithCleanup}
           onExportCollectionOpenApi={openApi.openExport}
+          onExportCollectionPostman={(collection) => void postman.exportCollection(collection)}
           onRunCollection={handleOpenCollectionRunner}
           onRunFolder={handleOpenFolderRunner}
           onSelectSavedRequest={handleSelectSavedRequest}
@@ -381,6 +397,7 @@ export const ApiClientLayout: React.FC<ApiClientLayoutProps> = ({
           onCreateEnvironment={handleCreateEnvironment}
           onUpdateEnvironment={handleUpdateEnvironment}
           onDeleteEnvironment={handleDeleteEnvironmentWithCleanup}
+          onExportEnvironmentPostman={postman.openEnvironmentExport}
           searchQuery={searchQuery}
           onCreateFolder={handleCreateFolder}
           onRenameFolder={handleRenameFolder}
@@ -470,11 +487,11 @@ export const ApiClientLayout: React.FC<ApiClientLayoutProps> = ({
                 activeTab={activeTab}
                 breadcrumbItems={activeRequestBreadcrumb}
                 globalHttpSettings={globalHttp.settings}
-                environmentVariables={
+                environmentVariables={getEnabledEnvironmentVariables(
                   environments.find(
                     (environment) => environment.id === activeEnvironmentId,
-                  )?.variables ?? {}
-                }
+                  ),
+                )}
                 requestWorkspaceRef={requestWorkspaceRef}
                 responsePanelHeight={responsePanelHeight}
                 isResizingResponse={isResizingResponse}
@@ -520,6 +537,27 @@ export const ApiClientLayout: React.FC<ApiClientLayoutProps> = ({
           collections={collections}
           onClose={() => setCurlImportOpen(false)}
           onImport={handleImportCurl}
+        />
+      )}
+
+      {postman.importOpen && (
+        <PostmanImportDialog
+          submitting={postman.submitting}
+          error={postman.error}
+          onInspect={postman.inspect}
+          onResetError={postman.resetError}
+          onClose={postman.closeImport}
+          onConfirm={postman.confirmImport}
+        />
+      )}
+
+      {postman.environmentToExport && (
+        <PostmanEnvironmentExportDialog
+          environment={postman.environmentToExport}
+          submitting={postman.submitting}
+          error={postman.error}
+          onClose={postman.closeEnvironmentExport}
+          onExport={postman.exportEnvironment}
         />
       )}
 

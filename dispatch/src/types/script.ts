@@ -86,6 +86,7 @@ export interface ScriptExecutionInput {
   request: ApiRequest;
   response?: ApiResponse;
   environment: Record<string, string>;
+  collection_variables?: Record<string, string>;
   hasActiveEnvironment: boolean;
   iteration?: number;
   iteration_count?: number;

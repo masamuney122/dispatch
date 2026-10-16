@@ -20,6 +20,9 @@ pub(super) fn create(
         parent_folder_id,
         created_at: context.timestamp.clone(),
         updated_at: context.timestamp.clone(),
+        description: String::new(),
+        auth: None,
+        scripts: Default::default(),
     };
     collection.folders.push(folder.clone());
     collection.updated_at = context.timestamp.clone();

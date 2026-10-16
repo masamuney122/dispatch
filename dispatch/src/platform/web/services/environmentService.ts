@@ -3,7 +3,7 @@ import {
   getActiveEnvironment as readActiveEnvironment,
   setActiveEnvironment as storeActiveEnvironment,
 } from "../adapters/indexedDb/preferences";
-import type { Environment } from "../../../types/environment";
+import type { Environment, EnvironmentVariableMetadata } from "../../../types/environment";
 import { applyEnvironmentMutationCore } from "./wasmClient";
 import { getActiveWorkspace, updateActiveWorkspace } from "./workspaceRuntime";
 
@@ -74,8 +74,14 @@ function requireEnvironment(result: MutationResult): Environment {
 export async function createEnvironment(
   name: string,
   variables: Record<string, string>,
+  variableMetadata?: Record<string, EnvironmentVariableMetadata>,
 ): Promise<Environment> {
-  return requireEnvironment(await mutate({ action: "create", name, variables }, true));
+  return requireEnvironment(await mutate({
+    action: "create",
+    name,
+    variables,
+    ...(variableMetadata ? { variable_metadata: variableMetadata } : {}),
+  }, true));
 }
 
 export async function listEnvironments(): Promise<Environment[]> {
@@ -86,8 +92,15 @@ export async function updateEnvironment(
   id: string,
   name: string,
   variables: Record<string, string>,
+  variableMetadata?: Record<string, EnvironmentVariableMetadata>,
 ): Promise<Environment> {
-  return requireEnvironment(await mutate({ action: "update", id, name, variables }));
+  return requireEnvironment(await mutate({
+    action: "update",
+    id,
+    name,
+    variables,
+    ...(variableMetadata ? { variable_metadata: variableMetadata } : {}),
+  }));
 }
 
 export async function deleteEnvironment(id: string): Promise<void> {

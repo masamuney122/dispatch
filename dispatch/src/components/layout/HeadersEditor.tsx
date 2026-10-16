@@ -228,10 +228,10 @@ export const HeadersEditor: React.FC<HeadersEditorProps> = ({
                   </td>
                   <td style={{ padding: '4px 16px' }}>
                     <div className="flex items-center justify-between">
-                      <input 
-                        type="text" 
-                        placeholder="Description" 
-                        className="w-full bg-transparent px-1 py-1 text-[11px] text-zinc-500 italic focus:outline-none focus:bg-[#2a2a2a] rounded mr-2" 
+                      <input
+                        type="text"
+                        placeholder="Description"
+                        className="w-full bg-transparent px-1 py-1 text-[11px] text-zinc-500 italic focus:outline-none rounded mr-2"
                       />
                       <button
                         onClick={() => removeHeader(idx)}

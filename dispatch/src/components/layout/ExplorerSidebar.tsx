@@ -9,7 +9,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useEffect, useRef, useState } from "react";
 import type { Collection, OrderItem, SavedRequest } from "../../types/collection";
-import type { Environment } from "../../types/environment";
+import type { Environment, EnvironmentVariableMetadata } from "../../types/environment";
 import type { HistoryItem } from "../../types/history";
 import { OverlayScrollArea } from "../common/OverlayScrollArea";
 import { EnvironmentSidebarSection } from "../environment/EnvironmentSidebarSection";
@@ -38,10 +38,12 @@ interface ExplorerSidebarProps {
   collections: Collection[];
   onImportCurl: () => void;
   onImportOpenApi: () => void;
+  onImportPostman: () => void;
   onCreateCollection: (name: string) => Promise<void>;
   onRenameCollection: (id: string, name: string) => Promise<void>;
   onDeleteCollection: (id: string) => Promise<void>;
   onExportCollectionOpenApi: (collection: Collection) => void;
+  onExportCollectionPostman: (collection: Collection) => void;
   onRunCollection: (collection: Collection) => void;
   onRunFolder: (collection: Collection, folderId: string, folderName: string) => void;
   onSelectSavedRequest: (item: SavedRequest) => void;
@@ -55,8 +57,14 @@ interface ExplorerSidebarProps {
   activeEnvironmentId: string | null;
   onOpenEnvironment: (environment: Environment) => void;
   onCreateEnvironment: (name: string, variables: Record<string, string>) => Promise<Environment>;
-  onUpdateEnvironment: (id: string, name: string, variables: Record<string, string>) => void;
+  onUpdateEnvironment: (
+    id: string,
+    name: string,
+    variables: Record<string, string>,
+    variableMetadata?: Record<string, EnvironmentVariableMetadata>,
+  ) => void;
   onDeleteEnvironment: (id: string) => Promise<void>;
+  onExportEnvironmentPostman: (environment: Environment) => void;
   searchQuery: string;
   onCreateFolder: (collectionId: string, name: string, parentFolderId: string | null) => Promise<void>;
   onRenameFolder: (collectionId: string, folderId: string, name: string) => Promise<void>;
@@ -84,10 +92,12 @@ export const ExplorerSidebar: React.FC<ExplorerSidebarProps> = ({
   collections,
   onImportCurl,
   onImportOpenApi,
+  onImportPostman,
   onCreateCollection,
   onRenameCollection,
   onDeleteCollection,
   onExportCollectionOpenApi,
+  onExportCollectionPostman,
   onRunCollection,
   onRunFolder,
   onSelectSavedRequest,
@@ -103,6 +113,7 @@ export const ExplorerSidebar: React.FC<ExplorerSidebarProps> = ({
   onCreateEnvironment,
   onUpdateEnvironment,
   onDeleteEnvironment,
+  onExportEnvironmentPostman,
   searchQuery,
   onCreateFolder,
   onRenameFolder,
@@ -278,6 +289,16 @@ export const ExplorerSidebar: React.FC<ExplorerSidebarProps> = ({
                       >
                         Import OpenAPI
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImportMenuOpen(false);
+                          onImportPostman();
+                        }}
+                        className="w-full rounded px-3 py-2 text-left text-xs font-medium text-zinc-200 transition-colors hover:bg-[#363636]"
+                      >
+                        Import Postman
+                      </button>
                     </div>
                   )}
                 </div>
@@ -411,6 +432,7 @@ export const ExplorerSidebar: React.FC<ExplorerSidebarProps> = ({
                             onRun={() => onRunCollection(collection)}
                             onRename={() => startRenamingCollection(collection)}
                             onExportOpenApi={() => onExportCollectionOpenApi(collection)}
+                            onExportPostman={() => onExportCollectionPostman(collection)}
                             onDelete={() => void onDeleteCollection(collection.id)}
                           />
                         )}
@@ -546,6 +568,7 @@ export const ExplorerSidebar: React.FC<ExplorerSidebarProps> = ({
         onOpen={onOpenEnvironment}
         onRename={onUpdateEnvironment}
         onDelete={onDeleteEnvironment}
+        onExportPostman={onExportEnvironmentPostman}
       />
 
       {deleteConfirm && (

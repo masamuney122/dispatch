@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { Environment } from "../../types/environment";
+import type { Environment, EnvironmentVariableMetadata } from "../../types/environment";
 import { EnvironmentVariablesTable } from "./EnvironmentVariablesTable";
 import type { EnvironmentVariableDraft } from "./EnvironmentVariableRow";
 import { getDuplicateVariableNames } from "../../utils/environmentVariableUtils";
@@ -10,23 +10,46 @@ interface EnvironmentEditorProps {
   onChange: (
     id: string,
     name: string,
-    variables: Record<string, string>
+    variables: Record<string, string>,
+    variableMetadata?: Record<string, EnvironmentVariableMetadata>,
   ) => void;
 }
 
-const createDraftVariables = (
-  variables: Record<string, string>
-): EnvironmentVariableDraft[] =>
-  Object.entries(variables).map(([key, value]) => ({
-    id: crypto.randomUUID(),
-    key,
-    value,
-  }));
+const createDraftVariables = (environment: Environment): EnvironmentVariableDraft[] =>
+  Object.entries(environment.variables)
+    .map(([key, value], index) => ({
+      key,
+      value,
+      order: environment.variable_metadata?.[key]?.order ?? index,
+    }))
+    .sort((left, right) => left.order - right.order)
+    .map(({ key, value }) => ({
+      id: crypto.randomUUID(),
+      key,
+      value,
+      enabled: environment.variable_metadata?.[key]?.enabled ?? true,
+      sensitive: environment.variable_metadata?.[key]?.sensitive ?? false,
+      description: environment.variable_metadata?.[key]?.description ?? "",
+    }));
 
 const toVariableRecord = (variables: EnvironmentVariableDraft[]) =>
   variables.reduce<Record<string, string>>((record, variable) => {
     const key = variable.key.trim();
     if (key) record[key] = variable.value;
+    return record;
+  }, {});
+
+const toVariableMetadata = (variables: EnvironmentVariableDraft[]) =>
+  variables.reduce<Record<string, EnvironmentVariableMetadata>>((record, variable, order) => {
+    const key = variable.key.trim();
+    if (key) {
+      record[key] = {
+        enabled: variable.enabled,
+        sensitive: variable.sensitive,
+        description: variable.description,
+        order,
+      };
+    }
     return record;
   }, {});
 
@@ -38,7 +61,7 @@ export const EnvironmentEditor: React.FC<EnvironmentEditorProps> = ({
   const [draftName, setDraftName] = useState(environment.name);
   const [editingName, setEditingName] = useState(false);
   const [draftVariables, setDraftVariables] = useState(() =>
-    createDraftVariables(environment.variables)
+    createDraftVariables(environment)
   );
 
   const duplicateNames = useMemo(
@@ -54,7 +77,8 @@ export const EnvironmentEditor: React.FC<EnvironmentEditorProps> = ({
     onChange(
       environment.id,
       name.trim(),
-      toVariableRecord(variables)
+      toVariableRecord(variables),
+      toVariableMetadata(variables),
     );
   };
 
@@ -66,7 +90,10 @@ export const EnvironmentEditor: React.FC<EnvironmentEditorProps> = ({
       name.trim(),
       duplicateNames.size > 0
         ? environment.variables
-        : toVariableRecord(draftVariables)
+        : toVariableRecord(draftVariables),
+      duplicateNames.size > 0
+        ? environment.variable_metadata
+        : toVariableMetadata(draftVariables),
     );
   };
 

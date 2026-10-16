@@ -3,14 +3,17 @@ use std::collections::HashMap;
 use dispatch_core::{
     ApiRequest, Collection, CollectionMutation, Environment, EnvironmentMutation,
     EnvironmentMutationContext, GlobalHttpSettings, MutationContext, OpenApiExportOptions,
-    OpenApiImportContext, OpenApiImportOptions,
-    apply_collection_mutation as apply_collection_mutation_core,
+    OpenApiImportContext, OpenApiImportOptions, PostmanEnvironmentExportOptions,
+    PostmanImportContext, apply_collection_mutation as apply_collection_mutation_core,
     apply_environment_mutation as apply_environment_mutation_core,
     classify_response_body as classify_response_body_core,
     create_workspace_bundle as create_workspace_bundle_core,
     export_collection_openapi as export_collection_openapi_core,
-    import_openapi as import_openapi_core, inspect_openapi as inspect_openapi_core,
-    parse_and_validate, parse_openapi as parse_openapi_core,
+    export_collection_postman as export_collection_postman_core,
+    export_environment_postman as export_environment_postman_core,
+    import_openapi as import_openapi_core, import_postman as import_postman_core,
+    inspect_openapi as inspect_openapi_core, inspect_postman as inspect_postman_core,
+    parse_and_validate, parse_openapi as parse_openapi_core, parse_postman as parse_postman_core,
     prepare_request as prepare_request_core,
     resolve_request_variables as resolve_request_variables_core,
 };
@@ -76,6 +79,61 @@ pub fn classify_response_body(
         is_utf8,
         is_empty,
     ))
+}
+
+#[wasm_bindgen]
+pub fn parse_postman(content: &str) -> Result<JsValue, JsValue> {
+    let document = parse_postman_core(content).map_err(|error| JsValue::from_str(&error))?;
+    to_json_compatible_value(&document)
+}
+
+#[wasm_bindgen]
+pub fn inspect_postman(document: JsValue, fallback_title: &str) -> Result<JsValue, JsValue> {
+    let document: Value = serde_wasm_bindgen::from_value(document)
+        .map_err(|error| JsValue::from_str(&format!("Failed to read Postman data: {error}")))?;
+    let preview = inspect_postman_core(&document, fallback_title)
+        .map_err(|error| JsValue::from_str(&error))?;
+    to_json_compatible_value(&preview)
+}
+
+#[wasm_bindgen]
+pub fn import_postman(
+    document: JsValue,
+    requested_name: Option<String>,
+    context: JsValue,
+) -> Result<JsValue, JsValue> {
+    let document: Value = serde_wasm_bindgen::from_value(document)
+        .map_err(|error| JsValue::from_str(&format!("Failed to read Postman data: {error}")))?;
+    let context: PostmanImportContext =
+        serde_wasm_bindgen::from_value(context).map_err(|error| {
+            JsValue::from_str(&format!("Failed to read Postman import context: {error}"))
+        })?;
+    let result = import_postman_core(&document, requested_name.as_deref(), &context)
+        .map_err(|error| JsValue::from_str(&error))?;
+    to_json_compatible_value(&result)
+}
+
+#[wasm_bindgen]
+pub fn export_collection_postman(collection: JsValue) -> Result<JsValue, JsValue> {
+    let collection: Collection = serde_wasm_bindgen::from_value(collection)
+        .map_err(|error| JsValue::from_str(&format!("Failed to read collection: {error}")))?;
+    let result =
+        export_collection_postman_core(&collection).map_err(|error| JsValue::from_str(&error))?;
+    to_json_compatible_value(&result)
+}
+
+#[wasm_bindgen]
+pub fn export_environment_postman(
+    environment: JsValue,
+    options: JsValue,
+) -> Result<JsValue, JsValue> {
+    let environment: Environment = serde_wasm_bindgen::from_value(environment)
+        .map_err(|error| JsValue::from_str(&format!("Failed to read environment: {error}")))?;
+    let options: PostmanEnvironmentExportOptions = serde_wasm_bindgen::from_value(options)
+        .map_err(|error| JsValue::from_str(&format!("Failed to read export options: {error}")))?;
+    let result = export_environment_postman_core(&environment, &options)
+        .map_err(|error| JsValue::from_str(&error))?;
+    to_json_compatible_value(&result)
 }
 
 #[wasm_bindgen]

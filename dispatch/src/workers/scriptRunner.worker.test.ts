@@ -413,7 +413,6 @@ describe("Dispatch script runtime", () => {
     const unsupportedScripts = [
       'pm.sendRequest("https://example.com");',
       'pm.globals.get("token");',
-      'pm.collectionVariables.get("token");',
       "pm.cookies.jar();",
       "pm.visualizer.set('<h1>test</h1>');",
       "pm.execution.skipRequest();",
@@ -426,6 +425,17 @@ describe("Dispatch script runtime", () => {
         /not supported by Dispatch scripts yet/,
       );
     }
+  });
+
+  it("reads imported collection variables through pm APIs", () => {
+    const result = evaluate(input(
+      'pm.test("collection variables", () => { pm.expect(pm.collectionVariables.get("token")).to.equal("collection"); pm.expect(pm.variables.get("token")).to.equal("environment"); });',
+      {
+        environment: { token: "environment" },
+        collection_variables: { token: "collection" },
+      },
+    ));
+    expect(result.tests).toEqual([{ name: "collection variables", passed: true }]);
   });
 
   it("rejects environment writes when no environment is active", () => {

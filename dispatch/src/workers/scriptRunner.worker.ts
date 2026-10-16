@@ -54,6 +54,7 @@ export const createScriptProgram = (input: ScriptExecutionInput) => {
   const __input = JSON.parse(${serializedInput});
   const __request = JSON.parse(JSON.stringify(__input.request));
   const __environment = JSON.parse(JSON.stringify(__input.environment || {}));
+  const __collectionVariables = JSON.parse(JSON.stringify(__input.collection_variables || {}));
   const __iterationDataValues = JSON.parse(JSON.stringify(__input.iteration_data || {}));
   const __mutations = [];
   const __logs = [];
@@ -485,11 +486,11 @@ export const createScriptProgram = (input: ScriptExecutionInput) => {
       const key = String(name);
       return Object.prototype.hasOwnProperty.call(__localVariables, key)
         ? __localVariables[key]
-        : __environment[key];
+        : (Object.prototype.hasOwnProperty.call(__environment, key) ? __environment[key] : __collectionVariables[key]);
     },
     has(name) {
       const key = String(name);
-      return Object.prototype.hasOwnProperty.call(__localVariables, key) || Object.prototype.hasOwnProperty.call(__environment, key);
+      return Object.prototype.hasOwnProperty.call(__localVariables, key) || Object.prototype.hasOwnProperty.call(__environment, key) || Object.prototype.hasOwnProperty.call(__collectionVariables, key);
     },
     set(name, value) {
       const key = String(name).trim();
@@ -500,7 +501,8 @@ export const createScriptProgram = (input: ScriptExecutionInput) => {
     replaceIn(value) {
       return String(value).replace(/\\{\\{\\s*([^{}]+?)\\s*\\}\\}/g, (match, name) => {
         if (Object.prototype.hasOwnProperty.call(__localVariables, name)) return __localVariables[name];
-        return Object.prototype.hasOwnProperty.call(__environment, name) ? __environment[name] : match;
+        if (Object.prototype.hasOwnProperty.call(__environment, name)) return __environment[name];
+        return Object.prototype.hasOwnProperty.call(__collectionVariables, name) ? __collectionVariables[name] : match;
       });
     }
   });
@@ -518,6 +520,17 @@ export const createScriptProgram = (input: ScriptExecutionInput) => {
       const key = String(name).trim();
       delete __environment[key];
       __mutations.push({ operation: "unset", key });
+    }
+  });
+  const __collectionVariablesApi = Object.freeze({
+    get(name) { return __collectionVariables[String(name)]; },
+    has(name) { return Object.prototype.hasOwnProperty.call(__collectionVariables, String(name)); },
+    set() { throw new Error("Collection variables are read-only during this run"); },
+    unset() { throw new Error("Collection variables are read-only during this run"); },
+    replaceIn(value) {
+      return String(value).replace(/\\{\\{\\s*([^{}]+?)\\s*\\}\\}/g, (match, name) =>
+        Object.prototype.hasOwnProperty.call(__collectionVariables, name) ? __collectionVariables[name] : match
+      );
     }
   });
   const __iterationData = Object.freeze({
@@ -562,7 +575,7 @@ export const createScriptProgram = (input: ScriptExecutionInput) => {
       iterationCount: Number.isInteger(__input.iteration_count) ? __input.iteration_count : 1
     }),
     globals: __unsupportedScope("pm/dp.globals"),
-    collectionVariables: __unsupportedScope("pm/dp.collectionVariables"),
+    collectionVariables: __collectionVariablesApi,
     iterationData: __iterationData,
     cookies: Object.freeze({
       jar() { return __unsupported("pm/dp.cookies.jar", "Use Dispatch's workspace Cookie Manager instead."); }

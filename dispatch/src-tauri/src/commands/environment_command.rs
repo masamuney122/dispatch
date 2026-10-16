@@ -105,6 +105,9 @@ pub fn create_environment(
     state: tauri::State<'_, Mutex<AppState>>,
     name: String,
     variables: std::collections::HashMap<String, String>,
+    variable_metadata: Option<
+        std::collections::HashMap<String, dispatch_core::EnvironmentVariableMetadata>,
+    >,
 ) -> Result<Environment, String> {
     let path = environment_file_path(runtime.inner())?;
     let workspace_id = workspace_id(runtime.inner())?;
@@ -112,7 +115,11 @@ pub fn create_environment(
     let result = mutate_environment_state(
         &mut app_state,
         &workspace_id,
-        EnvironmentMutation::Create { name, variables },
+        EnvironmentMutation::Create {
+            name,
+            variables,
+            variable_metadata,
+        },
         true,
     )?;
     save_environments(&path, &app_state.environments)?;
@@ -136,6 +143,9 @@ pub fn update_environment(
     id: String,
     name: String,
     variables: std::collections::HashMap<String, String>,
+    variable_metadata: Option<
+        std::collections::HashMap<String, dispatch_core::EnvironmentVariableMetadata>,
+    >,
 ) -> Result<Environment, String> {
     let path = environment_file_path(runtime.inner())?;
     let workspace_id = workspace_id(runtime.inner())?;
@@ -147,6 +157,7 @@ pub fn update_environment(
             id,
             name,
             variables,
+            variable_metadata,
         },
         false,
     )?;

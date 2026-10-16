@@ -150,6 +150,7 @@ pub fn import_openapi_source(
             id: uuid::Uuid::new_v4().to_string(),
             name,
             variables: state.environment_variables.clone(),
+            variable_metadata: Default::default(),
             workspace_id: Some(session.manifest.id.clone()),
             created_at: now.clone(),
             updated_at: now,

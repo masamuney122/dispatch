@@ -5,6 +5,7 @@ mod openapi_document;
 pub mod openapi_export;
 pub mod openapi_import;
 mod openapi_inspect;
+mod postman;
 mod request;
 mod request_auth;
 mod request_preparation;
@@ -19,7 +20,7 @@ pub use collection_mutation::{
 };
 pub use environment_mutation::{
     EnvironmentMutation, EnvironmentMutationContext, EnvironmentMutationResult,
-    apply_environment_mutation, merge_variable_scopes,
+    apply_environment_mutation, effective_environment_variables, merge_variable_scopes,
 };
 pub use openapi_document::{MAX_OPENAPI_SIZE, parse_openapi, serialize_openapi_yaml};
 pub use openapi_export::{
@@ -31,6 +32,12 @@ pub use openapi_import::{
     OpenApiRequestNaming, import_openapi,
 };
 pub use openapi_inspect::{OpenApiImportPreview, inspect_openapi};
+pub use postman::{
+    MAX_POSTMAN_SIZE, PostmanDocumentKind, PostmanEnvironmentExportOptions, PostmanExportDocument,
+    PostmanImportContext, PostmanImportDocument, PostmanImportPreview, PostmanWarning,
+    export_collection_postman, export_environment_postman, import_postman, inspect_postman,
+    parse_postman,
+};
 pub use request::{
     ApiRequest, BinaryBody, BodyField, CookieCredentials, GlobalHttpSettings,
     HttpVersionPreference, RequestBodyType, RequestHttpSettings, RequestScripts,
@@ -41,7 +48,8 @@ pub use request_preparation::{PreparedBody, PreparedRequest, prepare_request};
 pub use request_resolution::{RequestResolution, resolve_request_variables};
 pub use response_body::{ResponseBodyKind, classify_response_body};
 pub use workspace::{
-    Collection, CollectionsDocument, Environment, EnvironmentsDocument, Folder, ResolveResult,
-    SavedRequest, WORKSPACE_FORMAT, WORKSPACE_SCHEMA_VERSION, WorkspaceBundle, WorkspaceError,
-    WorkspaceManifest, create_workspace_bundle, parse_and_validate, resolve_template,
+    Collection, CollectionsDocument, Environment, EnvironmentVariableMetadata,
+    EnvironmentsDocument, Folder, ResolveResult, SavedRequest, WORKSPACE_FORMAT,
+    WORKSPACE_SCHEMA_VERSION, WorkspaceBundle, WorkspaceError, WorkspaceManifest,
+    create_workspace_bundle, parse_and_validate, resolve_template,
 };

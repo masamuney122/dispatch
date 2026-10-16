@@ -45,9 +45,9 @@ export const QueryParamsTable: React.FC<QueryParamsTableProps> = ({
         <table className="w-full text-left border-collapse text-xs">
           <thead>
             <tr className="bg-[#242424] border-b border-[#343434] text-zinc-400 font-semibold select-none text-xs">
-              <th className="w-1/3" style={{ padding: '8px 24px' }}>Key</th>
-              <th className="border-l border-[#2e2e2e] w-1/3" style={{ padding: '8px 24px' }}>Value</th>
-              <th className="border-l border-[#2e2e2e] flex items-center justify-between" style={{ padding: '8px 24px' }}>
+              <th className="w-1/3" style={{ padding: '8px 16px' }}>Key</th>
+              <th className="border-l border-[#2e2e2e] w-1/3" style={{ padding: '8px 16px' }}>Value</th>
+              <th className="border-l border-[#2e2e2e] flex items-center justify-between" style={{ padding: '8px 16px' }}>
                 <span>Description</span>
                 <div className="flex items-center gap-3 text-zinc-400 font-normal">
                   <button onClick={addParam} className="hover:underline cursor-pointer text-sky-400 font-medium">
@@ -62,27 +62,27 @@ export const QueryParamsTable: React.FC<QueryParamsTableProps> = ({
           <tbody className="divide-y divide-[#282828]">
             {apiKeyQueryParam && (
               <tr className="select-none bg-[#222222] text-zinc-500">
-                <td className="font-mono text-xs" style={{ padding: '6px 24px' }}>
+                <td className="font-mono text-xs" style={{ padding: '6px 16px' }}>
                   {apiKeyQueryParam.key}
                 </td>
-                <td className="border-l border-[#2e2e2e] font-mono text-xs" style={{ padding: '6px 24px' }}>
+                <td className="border-l border-[#2e2e2e] font-mono text-xs" style={{ padding: '6px 16px' }}>
                   {apiKeyQueryParam.value}
                 </td>
-                <td className="border-l border-[#2e2e2e] text-[11px] italic text-zinc-600" style={{ padding: '6px 24px' }}>
+                <td className="border-l border-[#2e2e2e] text-[11px] italic text-zinc-600" style={{ padding: '6px 16px' }}>
                   Automatically generated based on Authorization tab
                 </td>
               </tr>
             )}
             {params.length === 0 && !apiKeyQueryParam ? (
               <tr onClick={addParam} className="h-7 hover:bg-[#242424] transition-colors cursor-text">
-                <td className="text-zinc-600 font-mono" style={{ padding: '0 24px' }}>Key</td>
-                <td className="border-l border-[#2e2e2e] text-zinc-600 font-mono" style={{ padding: '0 24px' }}>Value</td>
-                <td className="border-l border-[#2e2e2e] text-zinc-600 italic" style={{ padding: '0 24px' }}>Description</td>
+                <td className="text-zinc-600 font-mono" style={{ padding: '0 16px' }}>Key</td>
+                <td className="border-l border-[#2e2e2e] text-zinc-600 font-mono" style={{ padding: '0 16px' }}>Value</td>
+                <td className="border-l border-[#2e2e2e] text-zinc-600 italic" style={{ padding: '0 16px' }}>Description</td>
               </tr>
             ) : params.length > 0 ? (
               params.map((param, idx) => (
                 <tr key={idx} className="h-7 hover:bg-[#202020] transition-colors group">
-                  <td style={{ padding: '0 24px' }}>
+                  <td style={{ padding: '0 16px' }}>
                     <EnvironmentVariableEditor
                       value={param.key}
                       variables={environmentVariables}
@@ -92,7 +92,7 @@ export const QueryParamsTable: React.FC<QueryParamsTableProps> = ({
                       variant="table"
                     />
                   </td>
-                  <td className="border-l border-[#2e2e2e]" style={{ padding: '0 24px' }}>
+                  <td className="border-l border-[#2e2e2e]" style={{ padding: '0 16px' }}>
                     <EnvironmentVariableEditor
                       value={param.value}
                       variables={environmentVariables}
@@ -102,7 +102,7 @@ export const QueryParamsTable: React.FC<QueryParamsTableProps> = ({
                       variant="table"
                     />
                   </td>
-                  <td className="h-7 border-l border-[#2e2e2e] flex items-center justify-between" style={{ padding: '0 24px' }}>
+                  <td className="h-7 border-l border-[#2e2e2e] flex items-center justify-between" style={{ padding: '0 16px' }}>
                     <span className="text-zinc-500 text-xs italic">Description</span>
                     <button
                       onClick={() => removeParam(idx)}

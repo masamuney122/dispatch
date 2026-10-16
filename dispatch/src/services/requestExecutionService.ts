@@ -21,6 +21,7 @@ export interface RequestExecutionContext {
   request: ApiRequest;
   scripts: RequestScripts;
   environment: Record<string, string>;
+  collectionVariables?: Record<string, string>;
   hasActiveEnvironment: boolean;
   iteration?: number;
   iterationCount?: number;
@@ -100,6 +101,7 @@ export async function executeRequestCycle({
   request,
   scripts,
   environment,
+  collectionVariables = {},
   hasActiveEnvironment,
   iteration = 0,
   iterationCount = 1,
@@ -124,6 +126,7 @@ export async function executeRequestCycle({
       source: scripts.pre_request,
       request,
       environment: runtimeEnvironment,
+      collection_variables: collectionVariables,
       hasActiveEnvironment,
       iteration,
       iteration_count: iterationCount,
@@ -148,7 +151,7 @@ export async function executeRequestCycle({
     stage = "variable-resolution";
     const resolvedTemplate = await resolveRequestVariables(
       { request: preResult.request, queryParams: [] },
-      { ...runtimeEnvironment, ...iterationData },
+      { ...collectionVariables, ...runtimeEnvironment, ...iterationData },
     );
     const resolvedRequest = resolvedTemplate.request;
     executionRequest = resolvedRequest;
@@ -163,6 +166,7 @@ export async function executeRequestCycle({
       request: resolvedRequest,
       response,
       environment: runtimeEnvironment,
+      collection_variables: collectionVariables,
       hasActiveEnvironment,
       iteration,
       iteration_count: iterationCount,

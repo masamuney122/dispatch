@@ -186,4 +186,9 @@ export const redactConsoleValues = (
   secrets: string[],
 ) => values.map((value) => redactConsoleValue(value, secrets));
 
-export const isSensitiveName = (name: string) => SENSITIVE_NAME.test(name);
+export const isSensitiveName = (name: string) => {
+  if (SENSITIVE_NAME.test(name)) return true;
+  const normalized = name.toLowerCase().replace(/[-_\s]/g, "");
+  return ["authorization", "token", "password", "secret", "apikey", "session", "cookie"]
+    .some((part) => normalized.includes(part));
+};

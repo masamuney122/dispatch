@@ -1,6 +1,7 @@
 import type { Collection } from "../types/collection";
 import type { OrderedRunnerRequest, RunnerScope } from "../types/runner";
 import { buildCollectionTree, type TreeNode } from "./collectionTree";
+import { collectionExecutionContext } from "./collectionExecutionContext";
 
 function flattenNodes(
   nodes: TreeNode[],
@@ -19,12 +20,20 @@ export function collectionRequestsInRunOrder(
   scope: RunnerScope = { type: "collection" },
 ): OrderedRunnerRequest[] {
   const tree = buildCollectionTree(collection);
-  if (scope.type === "collection") return flattenNodes(tree, []);
+  if (scope.type === "collection") return withExecutionContext(collection, flattenNodes(tree, []));
 
   const folderNode = findFolderNode(tree, scope.folderId);
-  return folderNode
+  const requests = folderNode
     ? flattenNodes(folderNode.children, [folderNode.folder.name])
     : [];
+  return withExecutionContext(collection, requests);
+}
+
+function withExecutionContext(collection: Collection, items: OrderedRunnerRequest[]): OrderedRunnerRequest[] {
+  return items.map((item) => {
+    const context = collectionExecutionContext(collection, item.request);
+    return { ...item, executionRequest: context.request, executionScripts: context.scripts, collectionVariables: context.variables };
+  });
 }
 
 function findFolderNode(nodes: TreeNode[], folderId: string): Extract<TreeNode, { type: "folder" }> | null {

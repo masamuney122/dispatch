@@ -74,7 +74,7 @@ body {
 }
 
 .dispatch-variable-editor-table .cm-editor.cm-focused {
-  background: #2a2a2a;
+  background: transparent;
 }
 
 .dispatch-variable-editor-table .cm-content {
@@ -162,7 +162,7 @@ html[data-theme="light"] .dispatch-url-editor {
 }
 
 html[data-theme="light"] .dispatch-variable-editor-table .cm-editor.cm-focused {
-  background: var(--dispatch-surface-muted);
+  background: transparent;
 }
 
 html[data-theme="light"] .dispatch-variable-editor-control {

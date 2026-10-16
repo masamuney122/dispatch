@@ -16,6 +16,7 @@ import { collectionRequestsInRunOrder } from "../utils/collectionRunOrder";
 import { runnerSummary } from "../utils/runnerMetrics";
 import { evaluatePerformanceCriterion } from "../utils/performanceRunner";
 import type { ConsoleEvent } from "../types/console";
+import { mergeEnabledEnvironmentVariables } from "../utils/environmentVariables";
 
 interface CollectionRunnerOptions {
   environments: Environment[];
@@ -221,7 +222,7 @@ export function useCollectionRunner({
           await commitEnvironment(
             environment.id,
             environment.name,
-            output.environment,
+            mergeEnabledEnvironmentVariables(environment, output.environment),
           );
         }
         const finishedAt = new Date().toISOString();

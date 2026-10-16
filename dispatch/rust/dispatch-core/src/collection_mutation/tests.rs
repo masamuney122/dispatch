@@ -38,6 +38,9 @@ fn collection() -> Collection {
             order: 0,
             created_at: "old".into(),
             updated_at: "old".into(),
+            description: String::new(),
+            auth: None,
+            scripts: Default::default(),
         }],
         requests: vec![SavedRequest {
             id: "r1".into(),
@@ -47,7 +50,12 @@ fn collection() -> Collection {
             order: 1,
             created_at: "old".into(),
             updated_at: "old".into(),
+            description: String::new(),
         }],
+        description: String::new(),
+        variables: Default::default(),
+        auth: None,
+        scripts: Default::default(),
     }
 }
 
@@ -65,8 +73,15 @@ fn target_collection() -> Collection {
             order: 0,
             created_at: "old".into(),
             updated_at: "old".into(),
+            description: String::new(),
+            auth: None,
+            scripts: Default::default(),
         }],
         requests: Vec::new(),
+        description: String::new(),
+        variables: Default::default(),
+        auth: None,
+        scripts: Default::default(),
     }
 }
 
@@ -96,6 +111,9 @@ fn deleting_a_folder_removes_its_entire_subtree() {
         order: 0,
         created_at: "old".into(),
         updated_at: "old".into(),
+        description: String::new(),
+        auth: None,
+        scripts: Default::default(),
     });
     source.requests.push(SavedRequest {
         id: "nested".into(),
@@ -105,6 +123,7 @@ fn deleting_a_folder_removes_its_entire_subtree() {
         order: 0,
         created_at: "old".into(),
         updated_at: "old".into(),
+        description: String::new(),
     });
     let result = apply_collection_mutation(
         &[source],
@@ -166,6 +185,9 @@ fn reorder_rejects_cycles_created_by_a_batch() {
         order: 2,
         created_at: "old".into(),
         updated_at: "old".into(),
+        description: String::new(),
+        auth: None,
+        scripts: Default::default(),
     });
     let error = apply_collection_mutation(
         &[source],
@@ -203,6 +225,9 @@ fn moving_a_folder_transfers_the_complete_subtree_atomically() {
         order: 0,
         created_at: "old".into(),
         updated_at: "old".into(),
+        description: String::new(),
+        auth: None,
+        scripts: Default::default(),
     });
     source.requests.push(SavedRequest {
         id: "nested".into(),
@@ -212,6 +237,7 @@ fn moving_a_folder_transfers_the_complete_subtree_atomically() {
         order: 0,
         created_at: "old".into(),
         updated_at: "old".into(),
+        description: String::new(),
     });
 
     let result = apply_collection_mutation(

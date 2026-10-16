@@ -1,4 +1,6 @@
 import type { ApiRequest } from "./request";
+import type { AuthConfig } from "./auth";
+import type { RequestScripts } from "./script";
 
 /**
  * A folder inside a collection. Folders can be nested via parent_folder_id.
@@ -14,6 +16,10 @@ export interface Folder {
   order: number;
   created_at: string;
   updated_at: string;
+  /** Optional metadata and inherited behavior (used by Postman-compatible imports). */
+  description?: string;
+  auth?: AuthConfig;
+  scripts?: RequestScripts;
 }
 
 export interface SavedRequest {
@@ -26,6 +32,7 @@ export interface SavedRequest {
   order: number;
   created_at: string;
   updated_at: string;
+  description?: string;
 }
 
 export interface Collection {
@@ -36,6 +43,10 @@ export interface Collection {
   requests: SavedRequest[];
   created_at: string;
   updated_at: string;
+  description?: string;
+  variables?: Record<string, string>;
+  auth?: AuthConfig;
+  scripts?: RequestScripts;
 }
 
 /** Used to atomically update order + parent after drag-and-drop. */

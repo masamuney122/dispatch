@@ -10,6 +10,7 @@ interface EnvironmentContextMenuProps {
   onClose: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onExportPostman: () => void;
 }
 
 const BackspaceIcon = () => (
@@ -24,6 +25,7 @@ export function EnvironmentContextMenu({
   onClose,
   onRename,
   onDelete,
+  onExportPostman,
 }: EnvironmentContextMenuProps) {
   const run = (action: () => void) => () => {
     action();
@@ -34,6 +36,9 @@ export function EnvironmentContextMenu({
     <ContextMenu x={x} y={y} onClose={onClose}>
       <ContextMenuItem onClick={run(onRename)} trailing="⌘E">
         Rename
+      </ContextMenuItem>
+      <ContextMenuItem onClick={run(onExportPostman)}>
+        Export as Postman Environment
       </ContextMenuItem>
       <ContextMenuDivider />
       <ContextMenuItem onClick={run(onDelete)} danger trailing={<BackspaceIcon />}>

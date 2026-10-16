@@ -18,6 +18,7 @@ export interface FolderContextMenuProps {
   onDuplicate?: () => void;
   onMove?: () => void;
   onExportOpenApi?: () => void;
+  onExportPostman?: () => void;
   onDelete: () => void;
 }
 
@@ -43,6 +44,7 @@ export const FolderContextMenu: React.FC<FolderContextMenuProps> = ({
   onDuplicate,
   onMove,
   onExportOpenApi,
+  onExportPostman,
   onDelete,
 }) => {
   const handle = (fn: () => void) => () => {
@@ -82,6 +84,11 @@ export const FolderContextMenu: React.FC<FolderContextMenuProps> = ({
       {onExportOpenApi && (
         <ContextMenuItem onClick={handle(onExportOpenApi)}>
           Export as OpenAPI
+        </ContextMenuItem>
+      )}
+      {onExportPostman && (
+        <ContextMenuItem onClick={handle(onExportPostman)}>
+          Export as Postman Collection
         </ContextMenuItem>
       )}
 

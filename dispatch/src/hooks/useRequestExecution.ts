@@ -10,15 +10,22 @@ import {
 import type { Environment } from "../types/environment";
 import type { HistoryItem } from "../types/history";
 import type { ApiRequest } from "../types/request";
+import type { Collection } from "../types/collection";
 import type { RequestTabState } from "../types/tab";
 import type { ConsoleEvent } from "../types/console";
 import { createRequestPayload } from "../utils/requestDraft";
 import { isSensitiveName } from "../services/console/redaction";
+import { collectionExecutionContext } from "../utils/collectionExecutionContext";
+import {
+  getEnabledEnvironmentVariables,
+  mergeEnabledEnvironmentVariables,
+} from "../utils/environmentVariables";
 
 interface RequestExecutionOptions {
   activeTab: RequestTabState;
   environments: Environment[];
   activeEnvironmentId: string | null;
+  collections: Collection[];
   updateActiveTab: (updates: Partial<RequestTabState>) => void;
   commitEnvironment: (
     id: string,
@@ -49,6 +56,7 @@ export function useRequestExecution({
   activeTab,
   environments,
   activeEnvironmentId,
+  collections,
   updateActiveTab,
   commitEnvironment,
   setHistory,
@@ -61,16 +69,30 @@ export function useRequestExecution({
       scriptReports: [],
       lastExecutedRequest: null,
     });
-    const originalRequest = createRequestPayload(activeTab);
+    let originalRequest = createRequestPayload(activeTab);
+    let scripts = activeTab.scripts;
+    let collectionVariables: Record<string, string> = {};
+    if (activeTab.selectedSavedRequestId) {
+      const collection = collections.find((item) => item.requests.some((request) => request.id === activeTab.selectedSavedRequestId));
+      const saved = collection?.requests.find((request) => request.id === activeTab.selectedSavedRequestId);
+      if (collection && saved) {
+        const inherited = collectionExecutionContext(collection, { ...saved, request: originalRequest });
+        originalRequest = inherited.request;
+        scripts = inherited.scripts;
+        collectionVariables = inherited.variables;
+      }
+    }
 
     try {
       const activeEnvironment = environments.find(
         (environment) => environment.id === activeEnvironmentId,
       );
+      const environmentVariables = getEnabledEnvironmentVariables(activeEnvironment);
       const execution = await executeRequestCycle({
         request: originalRequest,
-        scripts: activeTab.scripts,
-        environment: activeEnvironment?.variables || {},
+        scripts,
+        collectionVariables,
+        environment: environmentVariables,
         hasActiveEnvironment: Boolean(activeEnvironment),
         telemetry: {
           source: {
@@ -79,8 +101,8 @@ export function useRequestExecution({
             requestName: activeTab.title,
           },
           append: appendConsoleEvents,
-          knownSecrets: Object.entries(activeEnvironment?.variables || {})
-            .filter(([name]) => isSensitiveName(name))
+          knownSecrets: Object.entries(environmentVariables)
+            .filter(([name]) => activeEnvironment?.variable_metadata?.[name]?.sensitive || isSensitiveName(name))
             .map(([, value]) => value),
         },
         onEnvironmentMutated: activeEnvironment
@@ -88,7 +110,7 @@ export function useRequestExecution({
               await commitEnvironment(
                 activeEnvironment.id,
                 activeEnvironment.name,
-                variables,
+                mergeEnabledEnvironmentVariables(activeEnvironment, variables),
               );
             }
           : undefined,
@@ -140,6 +162,7 @@ export function useRequestExecution({
     activeTab,
     appendConsoleEvents,
     commitEnvironment,
+    collections,
     environments,
     setHistory,
     updateActiveTab,

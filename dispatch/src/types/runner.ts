@@ -2,6 +2,7 @@ import type { Collection, SavedRequest } from "./collection";
 import type { ApiRequest } from "./request";
 import type { ApiResponse } from "./response";
 import type { ScriptExecutionReport } from "./script";
+import type { RequestScripts } from "./script";
 
 export type RunnerRunType = "functional" | "performance";
 export type RunnerLoadProfile = "fixed" | "ramp-up";
@@ -116,6 +117,9 @@ export interface CollectionRunnerState {
 export interface OrderedRunnerRequest {
   request: SavedRequest;
   folderPath: string[];
+  executionRequest?: ApiRequest;
+  executionScripts?: RequestScripts;
+  collectionVariables?: Record<string, string>;
 }
 
 export const EMPTY_RUNNER_SUMMARY: RunnerSummary = {

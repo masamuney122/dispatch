@@ -17,6 +17,7 @@ import { createRunnerTransport } from "./runnerTransportService";
 import type { RunnerTransport } from "../types/runnerTransport";
 import type { ConsoleEvent } from "../types/console";
 import { isSensitiveName } from "./console/redaction";
+import { getEnabledEnvironmentVariables } from "../utils/environmentVariables";
 
 const MAX_RETAINED_RESPONSE_BYTES = 300 * 1024;
 
@@ -100,14 +101,15 @@ async function runOneRequest(
   appendConsoleEvents?: (events: ConsoleEvent[]) => void,
   virtualUser?: number,
 ): Promise<{ result: RunnerRequestResult; environment: Record<string, string>; hasError: boolean }> {
-  const request = structuredClone(item.request.request);
-  const scripts = request.scripts || { pre_request: "", post_response: "" };
+  const request = structuredClone(item.executionRequest || item.request.request);
+  const scripts = item.executionScripts || request.scripts || { pre_request: "", post_response: "" };
 
   try {
     const execution = await executeRequest({
       request,
       scripts,
       environment,
+      collectionVariables: item.collectionVariables,
       hasActiveEnvironment: activeEnvironment,
       iteration,
       iterationCount,
@@ -203,7 +205,7 @@ export async function runFunctionalCollection({
   runnerId,
   appendConsoleEvents,
 }: CollectionRunInput): Promise<CollectionRunOutput> {
-  let runtimeEnvironment = { ...(environment?.variables || {}) };
+  let runtimeEnvironment = { ...getEnabledEnvironmentVariables(environment) };
   let stopped = false;
   const transport = await createTransport(configuration.useStoredCookies);
 
@@ -285,7 +287,7 @@ export async function runPerformanceCollection({
   let fatalError = false;
 
   const runVirtualUser = async (virtualUser: number) => {
-    let runtimeEnvironment = { ...(environment?.variables || {}) };
+    let runtimeEnvironment = { ...getEnabledEnvironmentVariables(environment) };
     let iteration = 0;
     const startDelay = virtualUserStartDelayMs(configuration, virtualUser);
     if (startDelay > 0) {
@@ -337,7 +339,7 @@ export async function runPerformanceCollection({
     Array.from({ length: userCount }, (_, index) => runVirtualUser(index + 1)),
   );
   return {
-    environment: { ...(environment?.variables || {}) },
+    environment: { ...getEnabledEnvironmentVariables(environment) },
     stopped: isStopRequested() || fatalError,
   };
 }

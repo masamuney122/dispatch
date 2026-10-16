@@ -217,6 +217,7 @@ mod tests {
                 id: "env-1".into(),
                 name: "Local".into(),
                 variables: [("TOKEN".into(), "secret".into())].into(),
+                variable_metadata: Default::default(),
                 workspace_id: None,
                 created_at: String::new(),
                 updated_at: String::new(),

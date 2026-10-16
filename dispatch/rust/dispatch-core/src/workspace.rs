@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::ApiRequest;
+use crate::{ApiRequest, AuthConfig, RequestScripts};
 
 pub const WORKSPACE_FORMAT: &str = "dispatch-workspace";
 pub const WORKSPACE_SCHEMA_VERSION: u32 = 1;
@@ -32,6 +32,12 @@ pub struct Folder {
     pub created_at: String,
     #[serde(default)]
     pub updated_at: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub auth: Option<AuthConfig>,
+    #[serde(default)]
+    pub scripts: RequestScripts,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -47,6 +53,8 @@ pub struct SavedRequest {
     pub created_at: String,
     #[serde(default)]
     pub updated_at: String,
+    #[serde(default)]
+    pub description: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -61,6 +69,41 @@ pub struct Collection {
     pub created_at: String,
     #[serde(default)]
     pub updated_at: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub variables: HashMap<String, String>,
+    #[serde(default)]
+    pub auth: Option<AuthConfig>,
+    #[serde(default)]
+    pub scripts: RequestScripts,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct EnvironmentVariableMetadata {
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    #[serde(default)]
+    pub sensitive: bool,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub order: i64,
+}
+
+impl Default for EnvironmentVariableMetadata {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            sensitive: false,
+            description: String::new(),
+            order: 0,
+        }
+    }
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -69,6 +112,8 @@ pub struct Environment {
     pub name: String,
     #[serde(default)]
     pub variables: HashMap<String, String>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub variable_metadata: HashMap<String, EnvironmentVariableMetadata>,
     #[serde(default)]
     pub workspace_id: Option<String>,
     #[serde(default)]

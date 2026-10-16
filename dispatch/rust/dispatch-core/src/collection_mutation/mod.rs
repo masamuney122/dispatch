@@ -29,6 +29,10 @@ pub fn apply_collection_mutation(
                 requests: Vec::new(),
                 created_at: context.timestamp.clone(),
                 updated_at: context.timestamp.clone(),
+                description: String::new(),
+                variables: HashMap::new(),
+                auth: None,
+                scripts: Default::default(),
             };
             collections.push(collection.clone());
             Some(to_value(collection).map_err(serialize_error)?)

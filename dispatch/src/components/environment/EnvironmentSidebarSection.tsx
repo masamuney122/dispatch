@@ -1,5 +1,5 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import type { Environment } from "../../types/environment";
+import type { Environment, EnvironmentVariableMetadata } from "../../types/environment";
 import { OverlayScrollArea } from "../common/OverlayScrollArea";
 import { EnvironmentContextMenu } from "./EnvironmentContextMenu";
 
@@ -12,8 +12,14 @@ interface EnvironmentSidebarSectionProps {
     variables: Record<string, string>
   ) => Promise<Environment>;
   onOpen: (environment: Environment) => void;
-  onRename: (id: string, name: string, variables: Record<string, string>) => void;
+  onRename: (
+    id: string,
+    name: string,
+    variables: Record<string, string>,
+    variableMetadata?: Record<string, EnvironmentVariableMetadata>,
+  ) => void;
   onDelete: (id: string) => Promise<void>;
+  onExportPostman: (environment: Environment) => void;
 }
 
 export const EnvironmentSidebarSection: React.FC<
@@ -26,6 +32,7 @@ export const EnvironmentSidebarSection: React.FC<
   onOpen,
   onRename,
   onDelete,
+  onExportPostman,
 }) => {
     const [open, setOpen] = useState(true);
     const [creating, setCreating] = useState(false);
@@ -101,7 +108,7 @@ export const EnvironmentSidebarSection: React.FC<
     const finishRenaming = (environment: Environment) => {
       const name = editingName.trim();
       if (name && name !== environment.name) {
-        onRename(environment.id, name, environment.variables);
+        onRename(environment.id, name, environment.variables, environment.variable_metadata);
       }
       setEditingId(null);
     };
@@ -265,6 +272,7 @@ export const EnvironmentSidebarSection: React.FC<
               onClose={() => setContextMenu(null)}
               onRename={() => startRenaming(environment)}
               onDelete={() => void onDelete(environment.id)}
+              onExportPostman={() => onExportPostman(environment)}
             />
           );
         })()}
