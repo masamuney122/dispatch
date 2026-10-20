@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Dispatch",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.emretosun.dev",
   "build": {
     "frontendDist": "../dist/desktop",
     "devUrl": "http://localhost:5173",
@@ -19,6 +19,8 @@
           "x": 18,
           "y": 14
         },
+        "theme": "Dark",
+        "backgroundColor": "#202020",
         "width": 1280,
         "height": 800,
         "resizable": true,

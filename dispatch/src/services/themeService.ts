@@ -1,3 +1,5 @@
+import { setPlatformTheme } from "./platformService";
+
 export type AppTheme = "dark" | "light";
 
 const THEME_STORAGE_KEY = "dispatch.theme";
@@ -17,6 +19,7 @@ export function getStoredTheme(): AppTheme {
 export function applyTheme(theme: AppTheme): void {
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
+  void setPlatformTheme(theme).catch(() => undefined);
 
   try {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);

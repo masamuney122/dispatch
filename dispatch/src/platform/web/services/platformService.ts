@@ -15,6 +15,11 @@ export async function startWindowDrag(): Promise<void> {
   // Browser chrome cannot be dragged by the application.
 }
 
+export async function setPlatformTheme(theme: "dark" | "light"): Promise<void> {
+  // Browser chrome follows the browser and operating-system theme.
+  void theme;
+}
+
 export function registerPlatformServiceWorker(): void {
   if (!("serviceWorker" in navigator) || !import.meta.env.PROD) return;
   window.addEventListener("load", () => {

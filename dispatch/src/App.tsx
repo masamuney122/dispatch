@@ -19,6 +19,14 @@ function App() {
 
   useEffect(() => {
     void initializePlatform();
+
+    const frameId = window.requestAnimationFrame(() => {
+      const startup = document.getElementById("dispatch-startup");
+      startup?.classList.add("is-ready");
+      if (startup) window.setTimeout(() => startup.remove(), 180);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
   }, []);
 
   if (loading) {

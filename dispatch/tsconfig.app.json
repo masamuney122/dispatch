@@ -6,7 +6,7 @@
     "module": "esnext",
     "types": ["vite/client"],
     "paths": {
-      "@platform/*": ["src/platform/desktop/services/*"]
+      "@platform/*": ["./src/platform/desktop/services/*"]
     },
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,

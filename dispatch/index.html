@@ -5,6 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#202020" />
     <meta name="description" content="Dispatch API istemcisi" />
+    <style>
+      html,
+      body,
+      #root {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: #202020;
+      }
+
+      #dispatch-startup {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #202020;
+        color: #f4f4f5;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        transition: opacity 160ms ease;
+      }
+
+      #dispatch-startup.is-ready {
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      .dispatch-startup__content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .dispatch-startup__name {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+      }
+
+      .dispatch-startup__indicator {
+        width: 24px;
+        height: 2px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #3f3f46;
+      }
+
+      .dispatch-startup__indicator::after {
+        display: block;
+        width: 50%;
+        height: 100%;
+        border-radius: inherit;
+        background: #ff6c37;
+        content: "";
+        animation: dispatch-startup-progress 900ms ease-in-out infinite alternate;
+      }
+
+      @keyframes dispatch-startup-progress {
+        from { transform: translateX(0); }
+        to { transform: translateX(100%); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #dispatch-startup { transition: none; }
+        .dispatch-startup__indicator::after { animation: none; }
+      }
+    </style>
     <link rel="icon" type="image/png" href="%BASE_URL%favicon.png" />
     <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -13,6 +82,12 @@
     <title>Dispatch</title>
   </head>
   <body>
+    <div id="dispatch-startup" role="status" aria-label="Dispatch is loading">
+      <div class="dispatch-startup__content">
+        <span class="dispatch-startup__name">Dispatch</span>
+        <span class="dispatch-startup__indicator" aria-hidden="true"></span>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -17,6 +17,10 @@ export async function startWindowDrag(): Promise<void> {
   await getCurrentWindow().startDragging();
 }
 
+export async function setPlatformTheme(theme: "dark" | "light"): Promise<void> {
+  await getCurrentWindow().setTheme(theme);
+}
+
 export function registerPlatformServiceWorker(): void {
   // Desktop assets are served by Tauri and do not use a browser service worker.
 }
