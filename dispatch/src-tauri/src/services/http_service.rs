@@ -368,9 +368,8 @@ mod tests {
             let mut bytes = [0_u8; 1024];
             let _ = stream.read(&mut bytes).expect("read delayed request");
             thread::sleep(Duration::from_millis(100));
-            let _ = stream.write_all(
-                b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok",
-            );
+            let _ = stream
+                .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok");
         });
 
         let settings = GlobalHttpSettings {
@@ -378,11 +377,7 @@ mod tests {
             ..Default::default()
         };
         let error = tauri::async_runtime::block_on(send_request_with_settings(
-            request(
-                format!("http://{address}"),
-                "GET",
-                RequestBodyType::None,
-            ),
+            request(format!("http://{address}"), "GET", RequestBodyType::None),
             &settings,
         ))
         .expect_err("time out delayed response");

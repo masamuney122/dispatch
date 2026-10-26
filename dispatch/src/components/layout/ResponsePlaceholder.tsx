@@ -1,9 +1,14 @@
 import { useMemo, useState } from "react";
+import {
+  isSensitiveName,
+  maskSensitiveHeaderValue,
+} from "../../services/console/redaction";
 import type { ApiResponse } from "../../types/response";
 import type { ScriptExecutionReport } from "../../types/script";
 import { ResponseBodyView, type ResponseBodyMode } from "../response/ResponseBodyView";
 import { STATUS_TEXT, formatSize, getHeader, getResponseBodyKind, getStatusStyle, responseKindLabel } from "../../utils/responseUtils";
 import { OverlayScrollArea } from "../common/OverlayScrollArea";
+import { SecretVisibilityButton } from "../common/SecretVisibilityButton";
 import type { ConsoleEvent, ConsoleEventLevel, ConsoleEventType } from "../../types/console";
 import { ConsoleMultiSelect } from "../console/ConsoleMultiSelect";
 import {
@@ -85,6 +90,32 @@ export const ResponsePlaceholder: React.FC<ResponsePlaceholderProps> = ({ respon
   const [consoleType, setConsoleType] = useState<ConsoleTypeFilter>(() => CONSOLE_TYPE_OPTIONS.map((option) => option.value));
   const [consoleLevel, setConsoleLevel] = useState<ConsoleLevelFilter>(() => CONSOLE_LEVEL_OPTIONS.map((option) => option.value));
   const [showConsoleTimestamps, setShowConsoleTimestamps] = useState(true);
+  const [revealedResponseHeaders, setRevealedResponseHeaders] = useState<{
+    response: ApiResponse | null;
+    names: Set<string>;
+  }>(() => ({ response: null, names: new Set() }));
+  const [revealedCookies, setRevealedCookies] = useState<{
+    response: ApiResponse | null;
+    ids: Set<string>;
+  }>(() => ({ response: null, ids: new Set() }));
+
+  const toggleResponseHeader = (name: string) => {
+    setRevealedResponseHeaders((current) => {
+      const next = new Set(current.response === response ? current.names : []);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return { response, names: next };
+    });
+  };
+
+  const toggleCookie = (id: string) => {
+    setRevealedCookies((current) => {
+      const next = new Set(current.response === response ? current.ids : []);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return { response, ids: next };
+    });
+  };
 
   const responseData = useMemo(() => {
     if (!response) return null;
@@ -187,7 +218,7 @@ export const ResponsePlaceholder: React.FC<ResponsePlaceholderProps> = ({ respon
             {response && responseData && (
               <>
                 <span className={`font-semibold ${getStatusStyle(response.status)}`}>
-                  {response.status} {STATUS_TEXT[response.status] || "OK"}
+                  {response.status} {STATUS_TEXT[response.status] || "Unknown Status"}
                 </span>
                 <span className="text-[#969696]">
                   {response.response_time_ms} ms
@@ -342,7 +373,11 @@ export const ResponsePlaceholder: React.FC<ResponsePlaceholderProps> = ({ respon
               <OverlayScrollArea containerClassName="flex-1 min-h-0" className="overflow-auto" style={{ padding: "20px 36px 24px" }}>
                 <table className="w-full table-fixed overflow-hidden border-separate border-spacing-0 border border-[#343434] bg-[#202020] text-left font-mono text-xs">
                   <thead className="sticky top-0 z-10 bg-[#242424] text-[#969696]"><tr className="h-8"><th className="w-[18%] border-b border-[#343434] px-3 font-medium">Name</th><th className="w-[28%] border-b border-l border-[#343434] px-3 font-medium">Value</th><th className="w-[20%] border-b border-l border-[#343434] px-3 font-medium">Domain</th><th className="w-[12%] border-b border-l border-[#343434] px-3 font-medium">Path</th><th className="border-b border-l border-[#343434] px-3 font-medium">Attributes</th></tr></thead>
-                  <tbody>{response.cookies.map((cookie) => <tr key={`${cookie.domain}:${cookie.path}:${cookie.name}`} className="h-8 text-zinc-300"><td className="truncate border-b border-[#2e2e2e] px-3">{cookie.name}</td><td className="truncate border-b border-l border-[#2e2e2e] px-3 text-zinc-400">{cookie.value}</td><td className="truncate border-b border-l border-[#2e2e2e] px-3 text-zinc-400">{cookie.domain}</td><td className="truncate border-b border-l border-[#2e2e2e] px-3 text-zinc-400">{cookie.path}</td><td className="truncate border-b border-l border-[#2e2e2e] px-3 text-[10px] text-zinc-500">{[cookie.secure && "Secure", cookie.http_only && "HttpOnly", cookie.same_site && `SameSite=${cookie.same_site}`, cookie.expires_at ? new Date(cookie.expires_at * 1000).toLocaleString() : "Session"].filter(Boolean).join(" · ")}</td></tr>)}</tbody>
+                  <tbody>{response.cookies.map((cookie) => {
+                    const cookieId = `${cookie.domain}:${cookie.path}:${cookie.name}`;
+                    const revealed = revealedCookies.response === response && revealedCookies.ids.has(cookieId);
+                    return <tr key={cookieId} className="h-8 text-zinc-300"><td className="truncate border-b border-[#2e2e2e] px-3">{cookie.name}</td><td className="border-b border-l border-[#2e2e2e] px-3 text-zinc-400"><div className="flex min-w-0 items-center gap-1"><span className="min-w-0 flex-1 truncate">{revealed ? cookie.value : "••••••••••••"}</span><SecretVisibilityButton revealed={revealed} onToggle={() => toggleCookie(cookieId)} label={`${cookie.name} cookie value`} /></div></td><td className="truncate border-b border-l border-[#2e2e2e] px-3 text-zinc-400">{cookie.domain}</td><td className="truncate border-b border-l border-[#2e2e2e] px-3 text-zinc-400">{cookie.path}</td><td className="truncate border-b border-l border-[#2e2e2e] px-3 text-[10px] text-zinc-500">{[cookie.secure && "Secure", cookie.http_only && "HttpOnly", cookie.same_site && `SameSite=${cookie.same_site}`, cookie.expires_at ? new Date(cookie.expires_at * 1000).toLocaleString() : "Session"].filter(Boolean).join(" · ")}</td></tr>;
+                  })}</tbody>
                 </table>
               </OverlayScrollArea>
             ) : (
@@ -364,16 +399,26 @@ export const ResponsePlaceholder: React.FC<ResponsePlaceholderProps> = ({ respon
                   </tr>
                 </thead>
                 <tbody className="text-zinc-300">
-                  {responseData.headers.map(([key, value]) => (
+                  {responseData.headers.map(([key, value]) => {
+                    const sensitive = isSensitiveName(key);
+                    const revealed = revealedResponseHeaders.response === response && revealedResponseHeaders.names.has(key);
+                    const displayedValue = sensitive && !revealed
+                      ? maskSensitiveHeaderValue(key, value)
+                      : value;
+                    return (
                     <tr key={key} className="h-8 hover:bg-[#252525]">
                       <td className="border-b border-[#343434] px-4 py-0 text-zinc-200">
                         <span className="block truncate" title={key}>{key}</span>
                       </td>
-                      <td className="border-b border-l border-[#343434] px-4 py-0 select-text">
-                        <span className="block truncate" title={value}>{value}</span>
+                      <td className="border-b border-l border-[#343434] px-4 py-0">
+                        <div className="flex min-w-0 items-center gap-1">
+                          <span className="block min-w-0 flex-1 truncate select-text" title={revealed || !sensitive ? value : undefined}>{displayedValue}</span>
+                          {sensitive && <SecretVisibilityButton revealed={revealed} onToggle={() => toggleResponseHeader(key)} label={`${key} value`} />}
+                        </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </OverlayScrollArea>

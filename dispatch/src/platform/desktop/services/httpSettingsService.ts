@@ -7,6 +7,10 @@ export async function loadGlobalHttpSettings(): Promise<GlobalHttpSettings> {
 
 export async function saveGlobalHttpSettings(
   settings: GlobalHttpSettings,
+  proxyPassword?: string,
 ): Promise<GlobalHttpSettings> {
-  return invoke<GlobalHttpSettings>("update_http_settings", { settings });
+  return invoke<GlobalHttpSettings>("update_http_settings", {
+    settings,
+    proxyPassword: proxyPassword || null,
+  });
 }

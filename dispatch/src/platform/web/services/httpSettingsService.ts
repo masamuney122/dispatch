@@ -18,6 +18,10 @@ export async function loadGlobalHttpSettings(): Promise<GlobalHttpSettings> {
       max_response_size_mb: normalizeResponseSize(parsed.max_response_size_mb),
       cookies_enabled: parsed.cookies_enabled !== false,
       cookie_credentials: normalizeCookieCredentials(parsed.cookie_credentials),
+      proxy_mode: normalizeProxyMode(parsed.proxy_mode),
+      proxy_use_http: parsed.proxy_use_http !== false,
+      proxy_use_https: parsed.proxy_use_https !== false,
+      proxy_auth_enabled: parsed.proxy_auth_enabled === true,
     };
   } catch {
     return { ...DEFAULT_HTTP_SETTINGS };
@@ -26,7 +30,9 @@ export async function loadGlobalHttpSettings(): Promise<GlobalHttpSettings> {
 
 export async function saveGlobalHttpSettings(
   settings: GlobalHttpSettings,
+  proxyPassword?: string,
 ): Promise<GlobalHttpSettings> {
+  void proxyPassword;
   const normalized = {
     ...settings,
     max_redirects: normalizeRedirectLimit(settings.max_redirects),
@@ -34,9 +40,19 @@ export async function saveGlobalHttpSettings(
     max_response_size_mb: normalizeResponseSize(settings.max_response_size_mb),
     cookies_enabled: settings.cookies_enabled !== false,
     cookie_credentials: normalizeCookieCredentials(settings.cookie_credentials),
+    proxy_mode: normalizeProxyMode(settings.proxy_mode),
+    proxy_use_http: settings.proxy_use_http !== false,
+    proxy_use_https: settings.proxy_use_https !== false,
+    proxy_auth_enabled: settings.proxy_auth_enabled === true,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
   return normalized;
+}
+
+function normalizeProxyMode(value: unknown): GlobalHttpSettings["proxy_mode"] {
+  return value === "manual" || value === "no-proxy" || value === "system"
+    ? value
+    : "system";
 }
 
 function normalizeCookieCredentials(value: unknown): GlobalHttpSettings["cookie_credentials"] {

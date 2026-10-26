@@ -3,6 +3,7 @@ import { applyConsoleEvents } from "../../hooks/useConsoleStore";
 import type { ConsoleEvent } from "../../types/console";
 import type { ApiRequest } from "../../types/request";
 import { createExecutionConsoleEvents } from "./consoleRecorder";
+import { isSensitiveName, maskSensitiveHeaderValue } from "./redaction";
 
 const request = (): ApiRequest => ({
   method: "POST",
@@ -20,6 +21,19 @@ const request = (): ApiRequest => ({
 });
 
 describe("console recorder", () => {
+  it("identifies and masks sensitive header values without changing their auth scheme", () => {
+    expect(isSensitiveName("Authorization")).toBe(true);
+    expect(isSensitiveName("Proxy-Authorization")).toBe(true);
+    expect(isSensitiveName("X-API-Key")).toBe(true);
+    expect(isSensitiveName("Content-Type")).toBe(false);
+    expect(maskSensitiveHeaderValue("Authorization", "Basic dXNlcjpwYXNz")).toBe(
+      "Basic ••••••••••••",
+    );
+    expect(maskSensitiveHeaderValue("X-API-Key", "visible-secret")).toBe(
+      "••••••••••••",
+    );
+  });
+
   it("creates ordered structured events and redacts secrets before storage", () => {
     const input = request();
     const events = createExecutionConsoleEvents({

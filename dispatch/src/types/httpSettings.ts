@@ -1,6 +1,7 @@
 import type { CookieCredentials } from "./cookie";
 
 export type HttpVersionPreference = "auto" | "http1" | "http2";
+export type ProxyMode = "system" | "manual" | "no-proxy";
 
 export interface GlobalHttpSettings {
   http_version: HttpVersionPreference;
@@ -12,6 +13,13 @@ export interface GlobalHttpSettings {
   max_response_size_mb: number;
   cookies_enabled: boolean;
   cookie_credentials: CookieCredentials;
+  proxy_mode: ProxyMode;
+  proxy_url: string;
+  proxy_use_http: boolean;
+  proxy_use_https: boolean;
+  proxy_bypass: string;
+  proxy_auth_enabled: boolean;
+  proxy_username: string;
 }
 
 export const REQUEST_HTTP_SETTING_KEYS = [
@@ -37,6 +45,13 @@ export const DEFAULT_HTTP_SETTINGS: GlobalHttpSettings = {
   max_response_size_mb: 50,
   cookies_enabled: true,
   cookie_credentials: "same-origin",
+  proxy_mode: "system",
+  proxy_url: "",
+  proxy_use_http: true,
+  proxy_use_https: true,
+  proxy_bypass: "localhost,127.0.0.1,::1",
+  proxy_auth_enabled: false,
+  proxy_username: "",
 };
 
 export function resolveHttpSettings(

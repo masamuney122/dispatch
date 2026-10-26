@@ -98,7 +98,7 @@ const NumberSetting = ({
 const clampedNumber = (value: string, min: number, max: number, fallback: number) =>
   Math.min(max, Math.max(min, Number(value) || fallback));
 
-export function GlobalHttpSettingsEditor({
+export function GeneralHttpSettingsEditor({
   value,
   onChange,
   platform,
@@ -163,6 +163,152 @@ export function GlobalHttpSettingsEditor({
           </select>
         )}
       </SettingRow>
+    </div>
+  );
+}
+
+export function ProxySettingsEditor({
+  value,
+  onChange,
+  platform,
+  proxyPassword = "",
+  onProxyPasswordChange,
+}: {
+  value: GlobalHttpSettings;
+  onChange: (value: GlobalHttpSettings) => void;
+  platform: Platform;
+  proxyPassword?: string;
+  onProxyPasswordChange?: (value: string) => void;
+}) {
+  const desktop = platform === "desktop";
+
+  return (
+    <div>
+      {desktop ? (
+        <div className="space-y-5">
+          <section>
+            <h3 className="text-sm font-bold text-zinc-100">Proxy mode</h3>
+            <p className="mt-1 text-xs leading-5 text-zinc-500">
+              Choose how Dispatch connects when sending API requests.
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-2 rounded-lg bg-[#1d1d1d] p-1">
+              {([
+                ["system", "System proxy"],
+                ["manual", "Manual proxy"],
+                ["no-proxy", "No proxy"],
+              ] as const).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => onChange({ ...value, proxy_mode: mode })}
+                  className={`h-9 rounded-md text-xs font-semibold transition ${
+                    value.proxy_mode === mode
+                      ? "bg-[#343434] text-white shadow"
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {value.proxy_mode === "system" && (
+            <section className="rounded-lg border border-[#383838] bg-[#202020] p-5">
+              <div>
+                <p className="text-xs font-semibold text-zinc-200">Use operating system proxy settings</p>
+                <p className="mt-1 text-[11px] leading-4 text-zinc-500">
+                  Dispatch uses the current user&apos;s system proxy configuration and the standard HTTP_PROXY,
+                  HTTPS_PROXY, ALL_PROXY, and NO_PROXY environment variables.
+                </p>
+              </div>
+            </section>
+          )}
+
+          {value.proxy_mode === "no-proxy" && (
+            <section className="rounded-lg border border-[#383838] bg-[#202020] p-5">
+              <p className="text-xs font-semibold text-zinc-200">Connect directly</p>
+              <p className="mt-1 text-[11px] leading-4 text-zinc-500">
+                Requests connect directly to their destination. System and environment proxy settings are ignored.
+              </p>
+            </section>
+          )}
+
+          {value.proxy_mode === "manual" && (
+            <section className="divide-y divide-[#343434] rounded-lg border border-[#383838] bg-[#202020] px-5">
+              <div className="flex items-center justify-between gap-6 py-5">
+                <div>
+                  <p className="text-xs font-semibold text-zinc-200">Use proxy for</p>
+                  <p className="mt-0.5 text-[11px] text-zinc-500">Choose which request protocols use this proxy.</p>
+                </div>
+                <div className="flex gap-4 text-xs text-zinc-300">
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={value.proxy_use_http} onChange={(event) => onChange({ ...value, proxy_use_http: event.target.checked })} className="accent-[#ff6c37]" /> HTTP
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={value.proxy_use_https} onChange={(event) => onChange({ ...value, proxy_use_https: event.target.checked })} className="accent-[#ff6c37]" /> HTTPS
+                  </label>
+                </div>
+              </div>
+
+              <label className="grid grid-cols-[minmax(0,1fr)_minmax(260px,1fr)] items-center gap-8 py-5">
+                <div className="flex items-center justify-between gap-6">
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-200">Proxy server</span>
+                    <p className="mt-0.5 text-[11px] text-zinc-500">Include the protocol and port.</p>
+                  </div>
+                </div>
+                <input
+                  type="url"
+                  value={value.proxy_url}
+                  onChange={(event) => onChange({ ...value, proxy_url: event.target.value })}
+                  placeholder="http://proxy.company.com:8080"
+                  className="h-9 w-full rounded-lg border border-[#484848] bg-[#1d1d1d] px-3 text-xs text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-[#ff6c37]"
+                />
+              </label>
+
+              <div className="py-5">
+                <div className="flex items-center justify-between gap-6">
+                  <div>
+                    <p className="text-xs font-semibold text-zinc-200">This proxy requires authentication</p>
+                    <p className="mt-0.5 text-[11px] text-zinc-500">Uses HTTP Basic proxy authentication.</p>
+                  </div>
+                  <SettingsToggle checked={value.proxy_auth_enabled} onChange={() => onChange({ ...value, proxy_auth_enabled: !value.proxy_auth_enabled })} label="Proxy authentication" />
+                </div>
+
+                {value.proxy_auth_enabled && (
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <label>
+                      <span className="text-[11px] font-semibold text-zinc-400">Username</span>
+                      <input type="text" autoComplete="username" value={value.proxy_username} onChange={(event) => onChange({ ...value, proxy_username: event.target.value })} className="mt-1.5 h-9 w-full rounded-lg border border-[#484848] bg-[#1d1d1d] px-3 text-xs text-zinc-200 outline-none focus:border-[#ff6c37]" />
+                    </label>
+                    <label>
+                      <span className="text-[11px] font-semibold text-zinc-400">Password</span>
+                      <input type="password" autoComplete="current-password" value={proxyPassword} onChange={(event) => onProxyPasswordChange?.(event.target.value)} placeholder="Leave blank to keep the saved password" className="mt-1.5 h-9 w-full rounded-lg border border-[#484848] bg-[#1d1d1d] px-3 text-xs text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-[#ff6c37]" />
+                    </label>
+                    <p className="col-span-2 text-[10px] leading-4 text-zinc-600">
+                      The password is stored in the operating system credential vault, not in the workspace or settings JSON.
+                    </p>
+                  </div>
+                )}
+              </div>
+              <label className="grid grid-cols-[minmax(0,1fr)_minmax(260px,1fr)] gap-8 py-5">
+                <div>
+                  <span className="text-xs font-semibold text-zinc-200">Proxy bypass</span>
+                  <p className="mt-0.5 text-[11px] leading-4 text-zinc-500">Comma-separated hosts, domains, IP addresses, or CIDR ranges.</p>
+                </div>
+                <textarea
+                  value={value.proxy_bypass}
+                  onChange={(event) => onChange({ ...value, proxy_bypass: event.target.value })}
+                  placeholder="localhost, 127.0.0.1, ::1, .company.local"
+                  rows={3}
+                  className="w-full resize-y rounded-lg border border-[#484848] bg-[#1d1d1d] px-3 py-2 text-xs text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-[#ff6c37]"
+                />
+              </label>
+            </section>
+          )}
+        </div>
+      ) : <BrowserManaged />}
     </div>
   );
 }

@@ -192,3 +192,11 @@ export const isSensitiveName = (name: string) => {
   return ["authorization", "token", "password", "secret", "apikey", "session", "cookie"]
     .some((part) => normalized.includes(part));
 };
+
+export function maskSensitiveHeaderValue(name: string, value: string): string {
+  if (!isSensitiveName(name) || !value) return value;
+  const scheme = value.match(/^([A-Za-z][A-Za-z0-9_-]*)\s+/)?.[1];
+  return scheme && /^(basic|bearer|digest|negotiate|ntlm)$/i.test(scheme)
+    ? `${scheme} ••••••••••••`
+    : "••••••••••••";
+}

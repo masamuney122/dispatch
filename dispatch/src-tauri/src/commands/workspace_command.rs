@@ -5,7 +5,7 @@ use tauri::Manager;
 
 use crate::models::environment::AppState;
 use crate::models::workspace::{
-    EnvironmentsDocument, GlobalHttpSettings, RecentWorkspace, WorkspaceRuntimeState,
+    EnvironmentsDocument, GlobalHttpSettings, ProxyMode, RecentWorkspace, WorkspaceRuntimeState,
     WorkspaceSession, ENVIRONMENTS_FILE,
 };
 use crate::services::cookie_service::CookieRuntimeState;
@@ -109,10 +109,38 @@ pub fn update_http_settings(
     app_handle: tauri::AppHandle,
     runtime: tauri::State<'_, Mutex<WorkspaceRuntimeState>>,
     mut settings: GlobalHttpSettings,
+    proxy_password: Option<String>,
 ) -> Result<GlobalHttpSettings, String> {
     settings.max_redirects = settings.max_redirects.clamp(1, 100);
     settings.request_timeout_ms = settings.request_timeout_ms.min(3_600_000);
     settings.max_response_size_mb = settings.max_response_size_mb.min(1_024);
+    settings.proxy_url = settings.proxy_url.trim().to_string();
+    settings.proxy_bypass = settings.proxy_bypass.trim().to_string();
+    settings.proxy_username = settings.proxy_username.trim().to_string();
+
+    if settings.proxy_mode == ProxyMode::Manual {
+        if !settings.proxy_use_http && !settings.proxy_use_https {
+            return Err("Enable the manual proxy for HTTP, HTTPS, or both.".into());
+        }
+        let parsed = url::Url::parse(&settings.proxy_url)
+            .map_err(|error| format!("Enter a valid proxy server URL: {error}"))?;
+        if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
+            return Err("Proxy server must be an HTTP or HTTPS URL with a host.".into());
+        }
+    }
+
+    if settings.proxy_mode == ProxyMode::Manual && settings.proxy_auth_enabled {
+        if settings.proxy_username.is_empty() {
+            return Err("Enter a username when enabling proxy authentication.".into());
+        }
+        if let Some(password) = proxy_password.filter(|value| !value.is_empty()) {
+            crate::services::proxy_credential_service::store_password(&password)?;
+        } else if crate::services::proxy_credential_service::load_password()?.is_none() {
+            return Err("Enter a password when enabling proxy authentication.".into());
+        }
+    } else if settings.proxy_mode == ProxyMode::Manual {
+        crate::services::proxy_credential_service::delete_password()?;
+    }
     let app_data_dir = app_handle
         .path()
         .app_data_dir()

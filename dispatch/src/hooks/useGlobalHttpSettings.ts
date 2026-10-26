@@ -48,7 +48,7 @@ export function useGlobalHttpSettings({
     if (!saving) setOpen(false);
   };
 
-  const save = async (nextSettings: GlobalHttpSettings) => {
+  const save = async (nextSettings: GlobalHttpSettings, proxyPassword?: string) => {
     setSaving(true);
     setError(null);
     try {
@@ -58,7 +58,7 @@ export function useGlobalHttpSettings({
       const changedKeys = REQUEST_HTTP_SETTING_KEYS.filter((key) =>
         changedGlobalKeys.includes(key),
       ) as Array<keyof RequestHttpSettings>;
-      const saved = await saveGlobalHttpSettings(nextSettings);
+      const saved = await saveGlobalHttpSettings(nextSettings, proxyPassword);
       setSettings(saved);
       clearTabOverrides(changedKeys);
 

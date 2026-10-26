@@ -40,3 +40,9 @@ tauri-plugin-dialog = "2"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 serde_norway = "0.9"
 dispatch-core = { path = "../rust/dispatch-core" }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "3.6.3", default-features = false, features = ["windows-native"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3.6.3", default-features = false, features = ["apple-native"] }

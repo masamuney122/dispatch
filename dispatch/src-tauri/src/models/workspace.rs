@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 pub use dispatch_core::{
-    CollectionsDocument, EnvironmentsDocument, GlobalHttpSettings, WorkspaceManifest,
+    CollectionsDocument, EnvironmentsDocument, GlobalHttpSettings, ProxyMode, WorkspaceManifest,
     WORKSPACE_FORMAT, WORKSPACE_SCHEMA_VERSION,
 };
 

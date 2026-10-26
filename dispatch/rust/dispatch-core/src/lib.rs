@@ -40,7 +40,7 @@ pub use postman::{
 };
 pub use request::{
     ApiRequest, BinaryBody, BodyField, CookieCredentials, GlobalHttpSettings,
-    HttpVersionPreference, RequestBodyType, RequestHttpSettings, RequestScripts,
+    HttpVersionPreference, ProxyMode, RequestBodyType, RequestHttpSettings, RequestScripts,
     resolve_http_settings,
 };
 pub use request_auth::apply_request_auth;

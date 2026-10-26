@@ -412,6 +412,11 @@ html[data-theme="light"] ::selection {
   color: #0b3254;
 }
 
+html[data-theme="light"] .dispatch-settings-nav-active {
+  background-color: var(--dispatch-surface-active);
+  color: var(--dispatch-blue);
+}
+
 html[data-theme="light"] :is(
   [class~="bg-[#242424]"],
   [class~="bg-[#252525]"]

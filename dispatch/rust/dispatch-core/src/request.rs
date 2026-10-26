@@ -20,6 +20,20 @@ pub enum CookieCredentials {
     Include,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum ProxyMode {
+    System,
+    Manual,
+    NoProxy,
+}
+
+impl Default for ProxyMode {
+    fn default() -> Self {
+        Self::System
+    }
+}
+
 impl Default for CookieCredentials {
     fn default() -> Self {
         Self::SameOrigin
@@ -44,6 +58,13 @@ pub struct GlobalHttpSettings {
     pub max_response_size_mb: usize,
     pub cookies_enabled: bool,
     pub cookie_credentials: CookieCredentials,
+    pub proxy_mode: ProxyMode,
+    pub proxy_url: String,
+    pub proxy_use_http: bool,
+    pub proxy_use_https: bool,
+    pub proxy_bypass: String,
+    pub proxy_auth_enabled: bool,
+    pub proxy_username: String,
 }
 
 impl Default for GlobalHttpSettings {
@@ -58,6 +79,13 @@ impl Default for GlobalHttpSettings {
             max_response_size_mb: 50,
             cookies_enabled: true,
             cookie_credentials: CookieCredentials::SameOrigin,
+            proxy_mode: ProxyMode::System,
+            proxy_url: String::new(),
+            proxy_use_http: true,
+            proxy_use_https: true,
+            proxy_bypass: "localhost,127.0.0.1,::1".into(),
+            proxy_auth_enabled: false,
+            proxy_username: String::new(),
         }
     }
 }
@@ -100,6 +128,13 @@ pub fn resolve_http_settings(
         cookie_credentials: request
             .cookie_credentials
             .unwrap_or(global.cookie_credentials),
+        proxy_mode: global.proxy_mode,
+        proxy_url: global.proxy_url.clone(),
+        proxy_use_http: global.proxy_use_http,
+        proxy_use_https: global.proxy_use_https,
+        proxy_bypass: global.proxy_bypass.clone(),
+        proxy_auth_enabled: global.proxy_auth_enabled,
+        proxy_username: global.proxy_username.clone(),
     }
 }
 
@@ -182,6 +217,17 @@ mod tests {
         .unwrap();
         assert_eq!(request.body_type, RequestBodyType::Json);
         assert_eq!(request.scripts, RequestScripts::default());
+    }
+
+    #[test]
+    fn legacy_global_settings_default_to_the_system_proxy() {
+        let settings: GlobalHttpSettings = serde_json::from_value(serde_json::json!({})).unwrap();
+
+        assert_eq!(settings.proxy_mode, ProxyMode::System);
+        assert!(settings.proxy_use_http);
+        assert!(settings.proxy_use_https);
+        assert_eq!(settings.proxy_bypass, "localhost,127.0.0.1,::1");
+        assert!(!settings.proxy_auth_enabled);
     }
 
     #[test]
